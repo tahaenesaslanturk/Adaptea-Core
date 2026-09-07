@@ -1,0 +1,55 @@
+{
+  "goal": "Add slug creation, tagged note storage, search, JSON export, and documentation. Make python -m pytest pass.",
+  "tasks": [
+    {
+      "id": "slug",
+      "title": "Implement deterministic slug creation",
+      "description": "Create benchmark_app.slug.slugify with lowercase ASCII-style hyphenated slugs.",
+      "depends_on": [],
+      "acceptance_criteria": ["slugify produces local-agent-tea for the acceptance example"],
+      "files_hint": ["src/benchmark_app/slug.py"],
+      "risk": "low",
+      "complexity": "low"
+    },
+    {
+      "id": "store",
+      "title": "Implement tagged note storage",
+      "description": "Create deterministic note records and an in-memory NoteStore with sorted tags.",
+      "depends_on": [],
+      "acceptance_criteria": ["NoteStore.add and NoteStore.all satisfy the acceptance test"],
+      "files_hint": ["src/benchmark_app/store.py"],
+      "risk": "low",
+      "complexity": "medium"
+    },
+    {
+      "id": "search",
+      "title": "Implement note search",
+      "description": "Search note titles, bodies, and tags case-insensitively.",
+      "depends_on": ["store"],
+      "acceptance_criteria": ["search_notes returns matching notes in stable input order"],
+      "files_hint": ["src/benchmark_app/search.py"],
+      "risk": "low",
+      "complexity": "low"
+    },
+    {
+      "id": "export",
+      "title": "Implement deterministic JSON export",
+      "description": "Export note records as compact JSON with deterministic key and list ordering.",
+      "depends_on": ["store", "slug"],
+      "acceptance_criteria": ["export_json exactly matches the acceptance fixture"],
+      "files_hint": ["src/benchmark_app/export.py"],
+      "risk": "low",
+      "complexity": "medium"
+    },
+    {
+      "id": "docs",
+      "title": "Document the completed note package",
+      "description": "Update the README with package usage after all features exist.",
+      "depends_on": ["slug", "store", "search", "export"],
+      "acceptance_criteria": ["README documents slug, storage, search, and export"],
+      "files_hint": ["README.md"],
+      "risk": "low",
+      "complexity": "low"
+    }
+  ]
+}

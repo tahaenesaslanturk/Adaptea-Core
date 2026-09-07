@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "adaptea-core"
+version = "0.8.10"
+description = "Adaptive admission controller and orchestrator for local coding agents using LM Studio, Ollama, llama.cpp, and vLLM"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Adaptea contributors" }]
+dependencies = [
+  "httpx>=0.28,<1",
+  "prompt_toolkit>=3.0.40,<4",
+  "pydantic>=2.10,<3",
+  "rich>=13.9,<15",
+  "textual>=8.2,<9",
+  "typer>=0.16,<1",
+]
+
+[project.scripts]
+adaptea = "adaptea.cli:app"
+adaptea-core = "adaptea.desktop.server:main"
+
+[dependency-groups]
+dev = [
+  "mypy>=1.14,<2",
+  "pyinstaller>=6.11,<7",
+  "pytest>=8.3,<10",
+  "pytest-asyncio>=0.25,<2",
+  "ruff>=0.9,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/adaptea"]
+
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+# Same target as Adaptea Core, so `python -m mypy` with no arguments checks the package
+# rather than failing for want of a target, which is how CI invokes it.
+files = ["src"]

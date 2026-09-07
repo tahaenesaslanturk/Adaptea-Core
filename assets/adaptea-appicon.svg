@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" rx="228" fill="#0B1220"/>
+  <defs>
+    <linearGradient id="desktop-a" x1="140" y1="80" x2="400" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3EE"/>
+      <stop offset=".38" stop-color="#3B82F6"/>
+      <stop offset=".78" stop-color="#6D28D9"/>
+      <stop offset="1" stop-color="#A21CAF"/>
+    </linearGradient>
+    <linearGradient id="desktop-leaf" x1="360" y1="212" x2="210" y2="392" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#67E8F9"/>
+      <stop offset="1" stop-color="#4338CA"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(512 512) scale(1.62) translate(-250 -251)">
+    <path d="M232 92c11-24 37-24 48 0l128 300c8 20-6 36-25 36-12 0-21-6-26-18L262 170c-2-6-10-6-13 0L134 410c-5 12-14 18-26 18-19 0-33-16-25-36Z" fill="url(#desktop-a)"/>
+    <path d="M368 196c14 62-16 130-70 166-40 27-86 25-100-6-13-30 8-70 52-104 40-31 88-49 118-56Z" fill="url(#desktop-leaf)"/>
+  </g>
+</svg>

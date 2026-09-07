@@ -1,0 +1,111 @@
+[inference]
+# LM Studio remains the default when this section is absent.
+backend = "lmstudio"
+
+[lmstudio]
+base_url = "http://127.0.0.1:1234"
+lms_executable = "lms"
+telemetry_poll_seconds = 1.5
+
+# Used when [inference].backend = "ollama". Ollama's public API does not report queue
+# pressure or a concurrency ceiling, so Adaptive starts and remains at one worker unless
+# future measured signals make a higher target safe.
+[ollama]
+base_url = "http://127.0.0.1:11434"
+executable = "ollama"
+# model = "qwen3-coder:latest"
+
+[worker]
+provider = "opencode"
+executable = "opencode"
+max_agents = 8
+# Per coding worker. One of many, so it is expected to finish reasonably quickly.
+timeout_seconds = 900
+# Planning is a single call that gates the whole run, so it gets a longer leash.
+# Unset means max(timeout_seconds, 1800). Raise it for a large, slow local model.
+# planner_timeout_seconds = 3600
+default_scheduler = "adaptive"
+
+[worker.command_security]
+# Commands outside Adaptea's conservative read/test allowlist are denied to non-interactive
+# coding workers. Add only exact, scoped patterns you have reviewed. Host-wide destructive
+# patterns remain blocked even if an entry below matches them.
+# approved_commands = ["npm install zod@4", "git reset --hard HEAD"]
+approved_commands = []
+
+[project]
+# Leave test_command out (or empty) to let Adaptea detect the project's validator:
+# pytest when the repository has a suite, `npm test` when package.json defines a real
+# test script, and no validator at all for a project that has neither. A project with
+# no test suite is not treated as a validation failure.
+# Set it explicitly to pin the exact command Adaptea must run:
+# test_command = ["python", "-m", "pytest"]
+#
+# Set this to reject any change that could not be validated by a real command.
+no_tests_is_failure = false
+
+[controller]
+enabled = true
+decision_window_seconds = 10.0
+cooldown_seconds = 10.0
+pressure_samples = 3
+healthy_samples = 3
+ttft_degradation_ratio = 1.5
+throughput_degradation_ratio = 0.7
+
+[calibration]
+repetitions = 3
+# Concurrency levels to sweep. Every configured model is measured on its own and then
+# all of them are measured generating at once. [worker].max_agents is always added, even
+# when it is above a model's Max Concurrent Predictions: measuring what queueing costs
+# there is the only way to know whether that many agents is worth asking for.
+concurrency = [1, 2, 4, 8]
+seed = 2026
+
+# Optional. When absent or disabled, legacy single-model behavior is unchanged.
+[fleet]
+enabled = false
+topology = "auto"
+max_loaded_instances = 3
+memory_headroom_fraction = 0.20
+instance_ttl_seconds = 3600
+minimum_residency_seconds = 300
+
+[fleet.routing]
+high_complexity = "strong"
+low_complexity = "fast"
+medium_complexity = "auto"
+escalate_failed_fast_task = true
+
+# Which reviewer judges a task. Review asks a different question from implementation:
+# not "who can write this efficiently" but "how costly is a wrong approval". A fast model
+# is a fine reviewer for a typo and a poor one for an authentication change.
+#
+# Inert unless reviewers are loaded in more than one tier — with a single reviewer the run
+# behaves exactly as it did before task-based routing.
+[fleet.routing.reviewer]
+enabled = true
+high_complexity = "strong"
+medium_complexity = "strong"   # review is the last gate; ambiguity resolves upward
+low_complexity = "fast"
+security_sensitive = "strong"  # overrides the complexity answer
+escalate_after_retry = true    # a retried task has proved it is harder than it looked
+# Matched case-insensitively against title, description, acceptance criteria and file
+# hints. Replace the list to suit your domain; see the default in adaptea/config.py.
+# security_keywords = ["auth", "token", "billing"]
+
+# Configure model entries interactively with: adaptea fleet configure
+# The user assigns tiers; Adaptea does not infer quality from model size.
+# [[fleet.models]]
+# name = "strong"
+# model = "local-strong-coder"
+# tier = "strong"
+# roles = ["planner", "worker", "reviewer"]
+# instances = "auto"
+#
+# [[fleet.models]]
+# name = "fast"
+# model = "local-fast-coder"
+# tier = "fast"
+# roles = ["worker"]
+# instances = 2

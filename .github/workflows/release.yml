@@ -1,0 +1,92 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version being released, e.g. 0.8.1"
+        required: true
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  version-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - id: resolve
+        shell: bash
+        run: |
+          version="${{ github.event.inputs.version }}"
+          if [ -z "$version" ]; then version="${GITHUB_REF_NAME#v}"; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - run: uv run python -m scripts.release versions
+      - shell: bash
+        run: |
+          declared=$(uv run python -c "import sys;sys.path.insert(0,'scripts/release');from versions import collect;print(collect()[0].version)")
+          if [ "$declared" != "${{ steps.resolve.outputs.version }}" ]; then
+            echo "Tag says ${{ steps.resolve.outputs.version }} but the repository says $declared." >&2
+            exit 1
+          fi
+
+  quality:
+    needs: version-gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff format --check .
+      - run: uv run ruff check .
+      - run: uv run python -m mypy
+      - run: uv run python -m pytest
+
+  build-and-publish:
+    needs: [version-gate, quality]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Build distribution packages
+        run: uv build
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "v${{ needs.version-gate.outputs.version }}" dist/* \
+            --title "Adaptea Core v${{ needs.version-gate.outputs.version }}" \
+            --generate-notes \
+            --draft=false
+      - name: Publish to PyPI
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          if [ -n "$UV_PUBLISH_TOKEN" ]; then
+            uv publish
+          else
+            echo "PYPI_API_TOKEN is not set; skipping PyPI upload."
+          fi
+
